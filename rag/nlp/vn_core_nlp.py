@@ -1,0 +1,34 @@
+import py_vncorenlp
+import os
+from typing import Dict, Union
+from api.utils.file_utils import get_project_base_directory
+
+os.environ["JAVA_HOME"] = r"/usr/lib/jvm/java-11-openjdk-amd64"
+
+class VNCoreNLPTokenizer:
+    vn_core_nlp: py_vncorenlp.VnCoreNLP
+    def __init__(self):
+        self.vn_core_nlp = py_vncorenlp.VnCoreNLP(save_dir=get_project_base_directory() + "/rag/res/vn_core_nlp", annotators=["wseg", "pos", "ner", "parse"])
+    
+    def word_segment(self, line) -> str:
+        return " ".join(self.vn_core_nlp.word_segment(line))
+    
+    def pos_tag(self, token) -> Union[str, None]:
+        annotated_text = self.vn_core_nlp.annotate_text(token)
+        for sent in annotated_text.keys():
+            list_dict_words = annotated_text[sent]
+            for word in list_dict_words:
+                if word['wordForm'] == token:
+                    return word['posTag']
+    
+    def dependency_parse(self, line):
+        return self.vn_core_nlp.annotate_text(line)
+    
+    def print_out(self, dict_sentences):
+        self.vn_core_nlp.print_out(dict_sentences)
+    
+vn_core_nlp = VNCoreNLPTokenizer()
+if __name__ == "__main__":
+    line = "Tôi là sinh viên của Đại học Bách khoa Hà Nội. Hiện tại tôi đang làm kỹ sư tại Tập đoàn Công nghiệp - Viễn thông quân đội Viettel."
+    print(vn_core_nlp.word_segment(line))
+    vn_core_nlp.print_out(vn_core_nlp.pos_tag(line))
