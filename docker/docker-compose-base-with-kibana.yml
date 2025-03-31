@@ -14,7 +14,7 @@ services:
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - bootstrap.memory_lock=false
       - discovery.type=single-node
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
       - xpack.security.enrollment.enabled=true
       - xpack.security.http.ssl.enabled=false
       - xpack.security.transport.ssl.enabled=false
@@ -35,19 +35,19 @@ services:
     networks:
       - ragflow
     restart: on-failure
-
+    
   # kibana:
-  #   image: kibana:${STACK_VERSION}
+  #   image: kibana:8.11.3
   #   container_name: ragflow-kibana
   #   ports:
   #     - ${KIBANA_PORT}:5601
   #   env_file: .env
   #   environment:
-  #     - ELASTICSEARCH_HOSTS=http://localhost:${ES_PORT}
+  #     - ELASTICSEARCH_HOSTS=http://localhost:1200
   #   #   - ELASTICSEARCH_USERNAME=kibana_system
   #   #   - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
   #   healthcheck:
-  #     test: ["CMD-SHELL", "curl http://localhost:${ES_PORT}"]
+  #     test: ["CMD-SHELL", "curl http://localhost:5601"]
   #     interval: 10s
   #     timeout: 10s
   #     retries: 120
@@ -116,7 +116,7 @@ services:
     restart: on-failure
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-03-12T18-04-18Z
+    image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
     container_name: ragflow-minio
     command: server --console-address ":9001" /data
     ports:
@@ -127,7 +127,6 @@ services:
       - MINIO_ROOT_USER=${MINIO_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
       - TZ=${TIMEZONE}
-      - MINIO_HOSTNAME=localhost
     volumes:
       - minio_data:/data
     networks:
