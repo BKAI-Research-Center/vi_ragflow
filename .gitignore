@@ -33,6 +33,9 @@ docker/ragflow-logs/
 /logs
 rag/res
 
+# Exclude the data folder
+/data
+
 # Exclude sdk generated files
 sdk/python/ragflow.egg-info/
 sdk/python/build/
