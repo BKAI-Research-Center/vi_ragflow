@@ -17,8 +17,9 @@ def clean_text(text):
             cleaned_lines[-1] += " " + line
         else:
             cleaned_lines.append(line)
-
-    return "\n".join(cleaned_lines)
+    cleaned_line_txt = "\n".join(cleaned_lines)
+    cleaned_line_txt = reformat_text_with_newlines(cleaned_line_txt)
+    return cleaned_line_txt
 
 
 def split_text_by_dot(text, max_words_per_segment):
@@ -41,7 +42,7 @@ def split_text_by_dot(text, max_words_per_segment):
     return segments
 
 
-def split_text_to_chunks(text, max_word, overlap_sentences):
+def split_text_to_chunks(text, max_word=MAX_WORD_BY_CHUNK, overlap_sentences=OVERLAP_SENTENCES):
     sentences_now = text.split("\n")
     sentences = []
     for i in range(len(sentences_now)):
@@ -90,21 +91,24 @@ def split_text_to_chunks(text, max_word, overlap_sentences):
 
 
 HEADING_PRIORITY = {
-    "Điểm": 1,
-    "Điều": 2,
-    "Khoản": 3,
-    "decimal_1": 4,
-    "decimal_2": 5,
-    "decimal_3": 6,
-    "decimal_4": 7,
-    "letter_dot": 8,
-    "letter_paren": 8,
-    "letter_slash": 8,
+    "roman_numeral": 1,
+    "Điểm": 2,
+    "Điều": 3,
+    "Khoản": 4,
+    # "roman_numeral": 4,
+    "decimal_1": 5,
+    "decimal_2": 6,
+    "decimal_3": 7,
+    "decimal_4": 8,
+    "letter_dot": 9,
+    "letter_paren": 9,
+    "letter_slash": 9,
 }
 
 
 def extract_headings_and_chunks(text, max_words, overlap_sentences):
     patterns = [
+        (r"^\s*([IVXLCDM]+\.)\s+(.*)", "roman_numeral"),
         (r"^\s*(Điểm\s[^\W\d_].*)", "Điểm"),
         (r"^\s*(Điều\s[IVX\d]+.*)", "Điều"),
         (r"^\s*(Khoản\s\d+(\.\d+)?\s.*)", "Khoản"),
@@ -115,6 +119,7 @@ def extract_headings_and_chunks(text, max_words, overlap_sentences):
         (r"^\s*([a-z]\.)\s+(.*)", "letter_dot"),
         (r"^\s*(/[a-z])\s+(.*)", "letter_slash"),
         (r"^\s*(/[a-z]\))\s+(.*)", "letter_paren"),
+        (r"^\s*([a-z]\))\s+(.*)", "letter_paren")
     ]
 
     headings = []
@@ -194,15 +199,41 @@ def merge_chunks(chunks, max_words, headings):
 def table_to_text(table):
     return "\n".join([", ".join(map(str, row)) for row in table])
 
+detect_pattern = re.compile(r"(\s[a-z]\))\s+")
+
+def reformat_text_with_newlines(text):
+    reformatted_lines = []
+    
+    for line in text.split("\n"):
+        parts = detect_pattern.split(line)
+        rebuilt_line = ""
+        
+        for part in parts:
+            if re.match(r"\s[a-z]\)", part): 
+                if rebuilt_line:
+                    reformatted_lines.append(rebuilt_line.strip())  
+                rebuilt_line = part.strip()  
+            else:
+                rebuilt_line += " " + part.strip()  
+        
+        if rebuilt_line:
+            reformatted_lines.append(rebuilt_line.strip())
+    
+    return "\n".join(reformatted_lines)
 
 def main_chunking_law(
     text,
     max_words=MAX_WORD_BY_CHUNK,
     overlap_sentences=OVERLAP_SENTENCES,
-    is_clean_text=True,
+    is_clean_text=True,depth=0,
+    max_depth=20
 ):
+
+    if depth >= max_depth or len(text.strip()) < max_words:
+        return [text]
     if is_clean_text:
         text = clean_text(text)
+
     chunks, headings = extract_headings_and_chunks(text, max_words, overlap_sentences)
     final_chunks = merge_chunks(chunks, max_words, headings=headings)
 
@@ -210,9 +241,26 @@ def main_chunking_law(
     for merged_heading_list, chunk_group in final_chunks:
         chunk_final = ""
         for heading, htype, line_idx, full_line in merged_heading_list:
-            chunk_final = chunk_final + full_line + "\n"
-        for chunk in chunk_group:
-            chunk_final = chunk_final + chunk[3] + "\n"
-        lst_chunk_final.append(chunk_final)
+            chunk_final += full_line + "\n"
 
-    return lst_chunk_final
+        chunk_final_group = ""
+        for chunk in chunk_group:
+            chunk_final_group += chunk[3] + "\n"
+
+        if len(chunk_final_group.split()) <= max_words:
+            lst_chunk_final.append(chunk_final + chunk_final_group)
+            continue
+
+        list_chunk_final_group = main_chunking_law(
+            " ".join(chunk_final_group.split()[:]), is_clean_text=False, depth=depth+1
+        )
+
+        for chunk_final_sub in list_chunk_final_group:
+            lst_chunk_final.append(chunk_final + chunk_final_sub)
+    filtered_lst_chunk_final = []
+    for i in range(len(lst_chunk_final)):
+        if i < len(lst_chunk_final) - 1 and lst_chunk_final[i] in lst_chunk_final[i + 1]:
+            continue  
+        filtered_lst_chunk_final.append(lst_chunk_final[i])
+        
+    return filtered_lst_chunk_final

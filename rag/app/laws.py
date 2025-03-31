@@ -226,9 +226,10 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
     
     ###
     full_text = '\n'.join(sections)
+    # logging.info(f"full_texttttttttttttttttttttttttttt: {full_text}")
     chunks = main_chunking_law(full_text)
     ###
-
+    # logging.info(f"chunkkkkkkkkkkkkkkkkk: {chunks}")
 
     # return tokenize_chunks(["\n".join(ck)
     #                        for ck in chunks], doc, eng, pdf_parser)
