@@ -19,6 +19,7 @@ from collections import defaultdict, Counter
 from copy import deepcopy
 from typing import Callable
 import trio
+import time
 
 from graphrag.general.graph_prompt import SUMMARIZE_DESCRIPTIONS_PROMPT
 from graphrag.utils import get_llm_cache, set_llm_cache, handle_single_entity_extraction, \
@@ -29,6 +30,7 @@ from rag.utils import truncate
 GRAPH_FIELD_SEP = "<SEP>"
 DEFAULT_ENTITY_TYPES = ["organization", "person", "geo", "event", "category"]
 ENTITY_EXTRACTION_MAX_GLEANINGS = 2
+MAX_RETRIES = 100
 
 
 class Extractor:
@@ -52,18 +54,31 @@ class Extractor:
         self._get_relation_ = get_relation
         self._set_relation_ = set_relation
 
+
     def _chat(self, system, history, gen_conf):
         hist = deepcopy(history)
         conf = deepcopy(gen_conf)
-        response = get_llm_cache(self._llm.llm_name, system, hist, conf)
-        if response:
-            return response
-        response = self._llm.chat(system, hist, conf)
-        response = re.sub(r"<think>.*</think>", "", response, flags=re.DOTALL)
-        if response.find("**ERROR**") >= 0:
-            raise Exception(response)
-        set_llm_cache(self._llm.llm_name, system, response, history, gen_conf)
-        return response
+
+        # Check cache first
+        cached_response = get_llm_cache(self._llm.llm_name, system, hist, conf)
+        if cached_response:
+            return cached_response
+
+        # Attempt chat with retries
+        attempts = 0
+        while attempts <= MAX_RETRIES:
+            response = self._llm.chat(system, hist, conf)
+            response = re.sub(r"<think>.*</think>", "", response, flags=re.DOTALL)
+
+            if response.find("**ERROR**") == -1:  # No error found
+                set_llm_cache(self._llm.llm_name, system, response, history, gen_conf)
+                return response
+
+            attempts += 1  # Increment attempt counter on error
+            time.sleep(0.5)
+
+        # If max retries exceeded, raise exception with the last response
+        raise Exception(response)
 
     def _entities_and_relations(self, chunk_key: str, records: list, tuple_delimiter: str):
         maybe_nodes = defaultdict(list)
