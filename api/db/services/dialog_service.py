@@ -62,6 +62,13 @@ class DialogService(CommonService):
 
 
 def chat_solo(dialog, messages, stream=True):
+    """Chat without retrieving context
+
+    Args:
+        dialog: The configuration of dialog (or assistant configuration)
+        messages: Conversation history
+        stream: Streaming chat?
+    """
     if llm_id2llm_type(dialog.llm_id) == "image2text":
         chat_mdl = LLMBundle(dialog.tenant_id, LLMType.IMAGE2TEXT, dialog.llm_id)
     else:
@@ -92,6 +99,13 @@ def chat_solo(dialog, messages, stream=True):
 
 
 def chat(dialog, messages, stream=True, **kwargs):
+    """Chatting with the system, with multiturn chat session handled.
+
+    Args:
+        dialog: Dialog service
+        messages: The list of messages passed to the model, with historical chat preserved
+        stream (bool, optional): Streamming chat?
+    """
     assert messages[-1]["role"] == "user", "The last content of this conversation is not from user."
     if not dialog.kb_ids:
         for ans in chat_solo(dialog, messages, stream):
