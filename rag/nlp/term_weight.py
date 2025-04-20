@@ -176,16 +176,20 @@ class Dealer:
                  "firstnm": 1}
             return m[self.ne[t]]
 
-        def postag(t):
-            t = rag_tokenizer.tag(t)
-            if t in set(["r", "c", "d"]):
+        def postag(token):
+            tag = rag_tokenizer.tag(token)
+            if tag in ['PRP', 'IN', 'CC', 'RB']:
                 return 0.3
-            if t in set(["ns", "nt"]):
+            if tag == 'NNP':
                 return 3
-            if t in set(["n"]):
+            if tag == 'NN':
                 return 2
-            if re.match(r"[0-9-]+", t):
+            if tag == 'CD':
                 return 2
+            if tag == 'FW':  # Handle undefined or foreign words
+                if re.match(r"[0-9-]+$", token):
+                    return 2
+                return 1
             return 1
 
         def freq(t):
