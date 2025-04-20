@@ -498,19 +498,9 @@
 #  limitations under the License.
 #
 
-import logging
-import copy
-import datrie
-import math
-import os
 import re
-import string
-import sys
-from hanziconv import HanziConv
 import nltk
-from nltk import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
-from api.utils.file_utils import get_project_base_directory
 
 from rag.nlp.vn_core_nlp import vn_core_nlp
 
