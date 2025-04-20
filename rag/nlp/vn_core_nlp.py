@@ -2,6 +2,7 @@ import py_vncorenlp
 import os
 from typing import Dict, Union
 from api.utils.file_utils import get_project_base_directory
+import logging
 
 os.environ["JAVA_HOME"] = r"/usr/lib/jvm/java-11-openjdk-amd64"
 
@@ -44,14 +45,17 @@ class VNCoreNLPTokenizer:
         return " ".join(self.vn_core_nlp.word_segment(line))
 
     def pos_tag(self, token) -> str:
-        annotated_text = self.vn_core_nlp.annotate_text(token)
-        for sent in annotated_text.keys():
-            list_dict_words = annotated_text[sent]
-            for word in list_dict_words:
-                if word["wordForm"] == token.replace(" ", "_"):
-                    vn_tag = word["posTag"]
-                    return POS_MAPPING.get(vn_tag, "FW")
-        return "FW"  # Return 'FW' for undefined or unmatched tokens
+        try:
+            annotated_text = self.vn_core_nlp.annotate_text(token)
+            for sent in annotated_text.keys():
+                list_dict_words = annotated_text[sent]
+                for word in list_dict_words:
+                    if word["wordForm"] == token.replace(" ", "_"):
+                        vn_tag = word["posTag"]
+                        return POS_MAPPING.get(vn_tag, "FW")
+            return "FW"  # Return 'FW' for undefined or unmatched tokens
+        except Exception as e:
+            logging.exception(f"Current error token: {token}.\nException: {e}")
 
 
 vn_core_nlp = VNCoreNLPTokenizer()

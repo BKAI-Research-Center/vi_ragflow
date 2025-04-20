@@ -501,8 +501,11 @@
 import re
 import nltk
 from nltk.stem import PorterStemmer, WordNetLemmatizer
+import logging
 
 from rag.nlp.vn_core_nlp import vn_core_nlp
+
+nltk.download("averaged_perceptron_tagger_eng")
 
 class RagTokenizer:
     def __init__(self, debug=False):
@@ -554,14 +557,26 @@ class RagTokenizer:
         ]
 
     def _split_by_lang(self, line):
-        """Split text into segments classified as Vietnamese or English."""
+        """Split text into segments classified as Vietnamese or English based on a window of 5 elements."""
         arr = re.split(self.SPLIT_CHAR, line)
         txt_lang_pairs = []
-        for a in arr:
-            if not a:
+        for i in range(len(arr)):
+            if not arr[i]:
                 continue
-            is_vietnamese = any(not c.isascii() for c in a)
-            txt_lang_pairs.append((a, is_vietnamese))
+            # Combine the current element with up to two previous and two next neighbors
+            combined = ""
+            if i >= 2 and arr[i - 2]:
+                combined += arr[i - 2]
+            if i >= 1 and arr[i - 1]:
+                combined += arr[i - 1]
+            combined += arr[i]
+            if i < len(arr) - 1 and arr[i + 1]:
+                combined += arr[i + 1]
+            if i < len(arr) - 2 and arr[i + 2]:
+                combined += arr[i + 2]
+            # Check if the combined string contains non-ASCII characters
+            is_vietnamese = any(not c.isascii() for c in combined)
+            txt_lang_pairs.append((arr[i], is_vietnamese))
         return txt_lang_pairs
 
     def tokenize(self, line):
