@@ -234,7 +234,6 @@ class ESConnection(DocStoreConnection):
         if limit > 0:
             s = s[offset:offset + limit]
         q = s.to_dict()
-        # logger.debug(f"ESConnection.search {str(indexNames)} query: " + json.dumps(q))
 
         for i in range(ATTEMPT_TIME):
             try:
@@ -247,14 +246,11 @@ class ESConnection(DocStoreConnection):
                                      _source=True)
                 if str(res.get("timed_out", "")).lower() == "true":
                     raise Exception("Es Timeout.")
-                # logger.debug(f"ESConnection.search {str(indexNames)} res: " + str(res))
                 return res
             except Exception as e:
-                logger.exception(f"ESConnection.search {str(indexNames)} query: " + str(q))
                 if str(e).find("Timeout") > 0:
                     continue
                 raise e
-        # logger.error("ESConnection.search timeout for 3 times!")
         raise Exception("ESConnection.search timeout.")
 
     def get(self, chunkId: str, indexName: str, knowledgebaseIds: list[str]) -> dict | None:
