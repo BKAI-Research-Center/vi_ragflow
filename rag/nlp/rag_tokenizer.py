@@ -503,7 +503,7 @@ import nltk
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 import logging
 
-from rag.nlp.vn_core_nlp import vn_core_nlp
+from rag.nlp.vi_tokenizer import underthesea
 
 nltk.download("averaged_perceptron_tagger_eng")
 
@@ -513,7 +513,7 @@ class RagTokenizer:
         self.DEBUG = debug
         self.stemmer = PorterStemmer()
         self.lemmatizer = WordNetLemmatizer()
-        self.vn_core_nlp = vn_core_nlp
+        self.vn_core_nlp = underthesea
         self.SPLIT_CHAR = r"(\s+|[^\w\sÀ-ỹ]+)"
 
     def _strQ2B(self, ustring):
@@ -581,6 +581,7 @@ class RagTokenizer:
 
     def tokenize(self, line):
         """Tokenize input text into Vietnamese and English tokens."""
+        logging.debug(f"Input of tokenizer: {line}")
         line = self._strQ2B(line).lower()
         arr = self._split_by_lang(line)
         res = []
@@ -596,6 +597,7 @@ class RagTokenizer:
             else:
                 tokens = self.vn_core_nlp.word_segment(L).split()
                 res.extend(tokens)
+        logging.debug(f"Output of tokenizer: {res}")
         return " ".join(res).replace("  ", " ")
 
     def fine_grained_tokenize(self, tks):
