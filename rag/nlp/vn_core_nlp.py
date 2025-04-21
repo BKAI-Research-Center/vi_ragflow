@@ -56,6 +56,7 @@ class VNCoreNLPTokenizer:
             return "FW"  # Return 'FW' for undefined or unmatched tokens
         except Exception as e:
             logging.exception(f"Current error token: {token}.\nException: {e}")
+            return "FW"
 
 
 vn_core_nlp = VNCoreNLPTokenizer()
