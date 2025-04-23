@@ -60,7 +60,7 @@ class LayoutRecognizer(Recognizer):
                     "(资料|数据)来源[:：]", "[0-9a-z._-]+@[a-z0-9-]+\\.[a-z]{2,3}",
                     "\\(cid *: *[0-9]+ *\\)"
                     ]
-            return any([re.search(p, b["text"]) for p in patt])
+            return any(re.search(p, b["text"]) for p in patt)
 
         # layouts = super().__call__(image_list, thr, batch_size)
         surya_layouts = self.layout_predictor(image_list)
