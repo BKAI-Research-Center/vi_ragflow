@@ -109,9 +109,7 @@ class S3DownloaderMixin:
         pretrained_model_name_or_path = pretrained_model_name_or_path.replace("s3://", "")
         # cache_dir = Path(user_cache_dir('datalab')) / "models"
         download_model_dir = get_project_base_directory() + '/rag/res/surya_models'
-        print(f"[INFO] Downloading model to {download_model_dir}")
         local_path = os.path.join(download_model_dir, pretrained_model_name_or_path)
-        print(f"[INFO] Downloading model from {pretrained_model_name_or_path} to {local_path}")
         os.makedirs(local_path, exist_ok=True)
 
         # Retry logic for downloading the model folder
