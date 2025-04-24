@@ -24,7 +24,6 @@ from huggingface_hub import snapshot_download
 from api.utils.file_utils import get_project_base_directory
 from rag.nlp import rag_tokenizer
 from .recognizer import Recognizer
-from surya.table_rec import TableRecPredictor
 
 
 class TableStructureRecognizer(Recognizer):
@@ -38,7 +37,6 @@ class TableStructureRecognizer(Recognizer):
     ]
 
     def __init__(self):
-        self._tsr_model = TableRecPredictor()
         try:
             super().__init__(self.labels, "tsr", os.path.join(
                     get_project_base_directory(),
@@ -49,63 +47,7 @@ class TableStructureRecognizer(Recognizer):
                                               local_dir_use_symlinks=False))
 
     def __call__(self, images, thr=0.2):
-        raw_tbls = self._tsr_model(images)
-        tbls = []
-        for r_table in raw_tbls:
-            _r_table = []
-            ls_of_x = []
-            ls_of_y = []
-            for col in r_table.cols:
-                if not col.is_header:
-                    _r_table.append(
-                        {
-                            "type": "table column",
-                            "bbox": col.bbox,
-                            "score": col.confidence
-                        }
-                    )
-                else:
-                    _r_table.append(
-                        {
-                            "type": "table column header",
-                            "bbox": col.bbox,
-                            "score": col.confidence,
-                        }
-                    )
-                ls_of_x.extend([col.bbox[0], col.bbox[2]])
-            for row in r_table.rows:
-                if not row.is_header:
-                    _r_table.append(
-                        {
-                            "type": "table projected row header",
-                            "bbox": row.bbox,
-                            "score": row.confidence,
-                        }
-                    )
-                else:
-                    _r_table.append(
-                        {"type": "table row", "bbox": row.bbox, "score": row.confidence}
-                    )
-                ls_of_y.extend([row.bbox[1], row.bbox[3]])
-
-            x_table_0 = min(ls_of_x)
-            x_table_1 = max(ls_of_x)
-            y_table_0 = min(ls_of_y)
-            y_table_1 = max(ls_of_y)
-            _r_table = [
-                {
-                    "type": "table",
-                    "bbox": [x_table_0, y_table_0, x_table_1, y_table_1],
-                    "score": 1,
-                }
-            ] + _r_table
-
-            tbls.append(_r_table)
-
-        # tbls = super().__call__(images, thr)
-        logging.debug(
-            f"Result form of (TableStructure) Recognizer __call__ function: {tbls}"
-        )
+        tbls = super().__call__(images, thr)
         with open(get_project_base_directory() + "/deepdoc/test.txt", "a") as f:
             f.write("Result of `tbls = super().__call__(images, thr)`: \n")
             f.write(str(tbls))
@@ -150,9 +92,6 @@ class TableStructureRecognizer(Recognizer):
                         b["bottom"] = bottom
 
             res.append(lts)
-        logging.debug(
-            f"Result form of TableStructureRecognizer __call__ function: {res}"
-        )
         return res
 
     @staticmethod
