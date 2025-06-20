@@ -582,7 +582,6 @@ class RagTokenizer:
 
     def tokenize(self, line):
         """Tokenize input text into Vietnamese and English tokens."""
-        logging.debug(f"Input of tokenizer: {line}")
         line = self._strQ2B(line).lower()
         arr = self._split_by_lang(line)
         res = []
@@ -598,7 +597,6 @@ class RagTokenizer:
             else:
                 tokens = self.vn_core_nlp.word_segment(L).split()
                 res.extend(tokens)
-        logging.debug(f"Output of tokenizer: {res}")
         return " ".join(res).replace("  ", " ")
 
     def fine_grained_tokenize(self, tks):
